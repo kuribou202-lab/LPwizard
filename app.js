@@ -50,6 +50,20 @@ const requiredFields = {
   designGuide: "デザインガイド本文"
 };
 
+const workflowSteps = [
+  "projects",
+  "brief",
+  "library",
+  "favorites",
+  "writing",
+  "references",
+  "copy",
+  "design",
+  "canva",
+  "guide",
+  "settings"
+];
+
 const stepTitles = {
   projects: "案件一覧",
   brief: "案件ブリーフ",
@@ -63,18 +77,6 @@ const stepTitles = {
   guide: "デザインガイド",
   settings: "設定"
 };
-
-
-const progressChecks = [
-  { label: "案件概要を入力", test: (project) => Boolean(project.serviceName && project.productDescription && project.targetAudience && project.lpGoal) },
-  { label: "参考LPを選択", test: (project) => Boolean(project.mainReference) },
-  { label: "ライティング設計", test: (project) => Boolean(project.customerPain && project.desiredFuture && project.solution && project.cta) },
-  { label: "構成・原稿を保存", test: (project) => Boolean(project.generatedCopy) },
-  { label: "デザイン方針を入力", test: (project) => Boolean(project.designDirection && project.visualWorld && project.colorMood && project.fvDirection) },
-  { label: "生成画像メモを保存", test: (project) => Boolean(project.designAssets) },
-  { label: "Canva確認を進める", test: (project) => Object.values(project.checks || {}).filter(Boolean).length >= Math.ceil(checklistItems.length / 2) },
-  { label: "デザインガイドを保存", test: (project) => Boolean(project.designGuide) }
-];
 
 const requiredForCopy = [
   ["serviceName", "サービス名"],
@@ -106,6 +108,94 @@ const checklistItems = [
   ["事実関係を確認", "実商品、価格、店舗、キャンペーン内容とAI生成画像が矛盾していないか見る。"],
   ["パクリ感を確認", "参考LPに寄りすぎた構図、装飾、レイアウトになっていないか確認する。"],
   ["次回添削メモを残す", "プロ目線で直したい箇所をセクション別にメモする。"]
+];
+
+const progressSections = [
+  {
+    id: "brief",
+    label: "案件概要",
+    items: [
+      { id: "serviceName", label: "サービス名", field: "serviceName", required: true },
+      { id: "productDescription", label: "商材 / LP内容", field: "productDescription", required: true },
+      { id: "targetAudience", label: "ターゲット", field: "targetAudience", required: true },
+      { id: "valueProposition", label: "提供価値", field: "valueProposition" },
+      { id: "lpGoal", label: "LPの目的", field: "lpGoal", required: true },
+      { id: "kpi", label: "成果の目安", field: "kpi" },
+      { id: "trafficSource", label: "流入経路", field: "trafficSource" },
+      { id: "conversionPoint", label: "ゴール地点", field: "conversionPoint", required: true }
+    ]
+  },
+  {
+    id: "writing",
+    label: "ライティング設計",
+    items: [
+      { id: "customerPain", label: "ターゲットの悩み", field: "customerPain", required: true },
+      { id: "desiredFuture", label: "理想の未来", field: "desiredFuture", required: true },
+      { id: "painCause", label: "悩みの原因", field: "painCause" },
+      { id: "solution", label: "解決策", field: "solution", required: true },
+      { id: "benefits", label: "ベネフィット", field: "benefits" },
+      { id: "differentiators", label: "差別化ポイント", field: "differentiators" },
+      { id: "trustProof", label: "信頼材料", field: "trustProof" },
+      { id: "offer", label: "オファー", field: "offer" },
+      { id: "objections", label: "不安・反論", field: "objections" },
+      { id: "cta", label: "CTA", field: "cta", required: true }
+    ]
+  },
+  {
+    id: "references",
+    label: "参考LP",
+    items: [
+      { id: "mainReference", label: "メイン参考LPを1件選択", test: (project) => Boolean(project?.mainReference), focus: "referenceSearch", required: true },
+      { id: "supportReference", label: "補助参考LPを1件以上選択", test: (project) => Boolean(project?.references?.length), focus: "referenceSearch", required: true }
+    ]
+  },
+  {
+    id: "copy",
+    label: "構成・原稿",
+    items: [
+      { id: "copyPromptGenerated", label: "構成・原稿プロンプトを生成済み", flag: "copyPromptGenerated", focus: "generateCopyPrompt" },
+      { id: "generatedCopy", label: "AI生成後のLP構成・原稿を保存済み", field: "generatedCopy", required: true }
+    ]
+  },
+  {
+    id: "design",
+    label: "デザイン設計",
+    items: [
+      { id: "designDirection", label: "デザイン方針", field: "designDirection", required: true },
+      { id: "visualWorld", label: "世界観", field: "visualWorld", required: true },
+      { id: "colorMood", label: "色・雰囲気", field: "colorMood", required: true },
+      { id: "photoStyle", label: "写真・画像の見せ方", field: "photoStyle" },
+      { id: "fvDirection", label: "ファーストビュー方針", field: "fvDirection", required: true },
+      { id: "layoutNotes", label: "レイアウト・余白", field: "layoutNotes" }
+    ]
+  },
+  {
+    id: "image",
+    label: "画像生成準備",
+    stepId: "design",
+    items: [
+      { id: "designPromptGenerated", label: "画像生成プロンプトを生成済み", flag: "designPromptGenerated", focus: "generateDesignPrompt" },
+      { id: "designAssets", label: "生成画像の保存場所・メモを入力済み", field: "designAssets", required: true }
+    ]
+  },
+  {
+    id: "canva",
+    label: "Canva確認",
+    items: checklistItems.map((item, index) => ({
+      id: `canva-${index}`,
+      label: item[0],
+      test: (project) => Boolean(project?.checks?.[index]),
+      focus: "canvaChecklist"
+    }))
+  },
+  {
+    id: "guide",
+    label: "デザインガイド",
+    items: [
+      { id: "guidePromptGenerated", label: "デザインガイドプロンプトを生成済み", flag: "guidePromptGenerated", focus: "generateGuidePrompt" },
+      { id: "designGuide", label: "デザインガイド本文を保存済み", field: "designGuide", required: true }
+    ]
+  }
 ];
 
 const optionGroups = [
@@ -238,7 +328,10 @@ function buildProjectData() {
     references: state.references,
     checks: state.checks,
     selections: state.selections,
-    selectionNotes: state.selectionNotes
+    selectionNotes: state.selectionNotes,
+    progressFlags: {
+      ...(existing?.progressFlags || {})
+    }
   };
   fields.forEach((id) => {
     data[id] = getFieldValue(id);
@@ -274,6 +367,8 @@ function persistProject(statusText = "自動保存済み") {
   renderProjects();
   renderCurrentProjectLabel();
   renderProgress();
+  renderSectionProgressSummaries();
+  renderStepStates();
   setStatus(statusText);
 }
 
@@ -299,26 +394,214 @@ function showValidation(id, missing, successText) {
     : successText;
 }
 
-function projectProgress(project = currentProject()) {
-  if (!project) return { percent: 0, next: "新規案件を作成してください", complete: 0 };
-  const complete = progressChecks.filter((item) => item.test(project)).length;
-  const nextItem = progressChecks.find((item) => !item.test(project));
+function renderSectionProgressSummaries() {
+  const project = currentFormProject();
+  const sections = projectProgress(project).sections;
+  document.querySelectorAll("[data-section-progress]").forEach((element) => {
+    const stepId = element.dataset.sectionProgress;
+    const relatedSections = sectionForStep(stepId, sections);
+    if (!relatedSections.length) {
+      element.hidden = true;
+      return;
+    }
+    element.hidden = false;
+    const allItems = relatedSections.flatMap((section) => section.items);
+    const requiredItems = allItems.filter((item) => item.required);
+    const completedAll = allItems.filter((item) => isProgressItemComplete(project, item)).length;
+    const completedRequired = requiredItems.filter((item) => isProgressItemComplete(project, item)).length;
+    const requiredText = requiredItems.length
+      ? completedRequired === requiredItems.length
+        ? "必須項目の入力が完了しました"
+        : `必須項目 ${completedRequired} / ${requiredItems.length}入力済み`
+      : "必須項目はありません";
+    element.innerHTML = `
+      <strong>${requiredText}</strong>
+      <span>全項目 ${completedAll} / ${allItems.length}入力済み</span>
+    `;
+  });
+}
+
+function setupSectionProgressSummaries() {
+  document.querySelectorAll(".panel").forEach((panel) => {
+    if (panel.querySelector("[data-section-progress]")) return;
+    if (!sectionForStep(panel.id, projectProgress(currentFormProject()).sections).length) return;
+    const summary = document.createElement("div");
+    summary.className = "section-progress-summary";
+    summary.dataset.sectionProgress = panel.id;
+    const header = panel.querySelector(".section-head, .section-subhead");
+    if (header) header.insertAdjacentElement("afterend", summary);
+  });
+  renderSectionProgressSummaries();
+}
+
+function setupStepNavigation() {
+  document.querySelectorAll(".panel").forEach((panel) => {
+    if (panel.querySelector(".step-navigation")) return;
+    const nav = document.createElement("div");
+    nav.className = "step-navigation";
+    nav.innerHTML = `
+      <button class="secondary" type="button" data-step-move="-1">前のステップへ</button>
+      <button type="button" data-step-move="1">次のステップへ</button>
+    `;
+    panel.appendChild(nav);
+  });
+  document.querySelectorAll("[data-step-move]").forEach((button) => {
+    button.addEventListener("click", () => moveStep(Number(button.dataset.stepMove)));
+  });
+}
+
+function isProgressItemComplete(project, item) {
+  if (!project) return false;
+  if (item.field) return Boolean(String(project[item.field] || "").trim());
+  if (item.flag) return Boolean(project.progressFlags?.[item.flag]);
+  if (item.test) return Boolean(item.test(project));
+  return false;
+}
+
+function progressSectionResult(project, section) {
+  const complete = section.items.filter((item) => isProgressItemComplete(project, item)).length;
   return {
-    percent: Math.round((complete / progressChecks.length) * 100),
-    next: nextItem ? `次: ${nextItem.label}` : "第1・2話の工程は完了です",
-    complete
+    ...section,
+    complete,
+    total: section.items.length,
+    missingItems: section.items.filter((item) => !isProgressItemComplete(project, item))
   };
 }
 
-function renderProgress() {
-  const project = currentProject();
-  const progress = projectProgress(project ? buildProjectData() : null);
-  if ($("progressLabel")) $("progressLabel").textContent = `進捗 ${progress.percent}%`;
-  if ($("nextActionLabel")) $("nextActionLabel").textContent = progress.next;
-  if ($("progressBar")) $("progressBar").style.width = `${progress.percent}%`;
+function projectProgress(project = currentProject()) {
+  if (!project) return { percent: 0, next: "新規案件を作成してください", complete: 0, total: 0, sections: [] };
+  const sections = progressSections.map((section) => progressSectionResult(project, section));
+  const complete = sections.reduce((sum, section) => sum + section.complete, 0);
+  const total = sections.reduce((sum, section) => sum + section.total, 0);
+  const nextSection = sections.find((section) => section.complete < section.total);
+  const nextItem = nextSection?.missingItems[0];
+  return {
+    percent: total ? Math.round((complete / total) * 100) : 0,
+    next: nextItem ? `次: ${nextSection.label}の「${nextItem.label}」` : "第1・2話の工程は完了です",
+    complete,
+    total,
+    sections
+  };
 }
 
-function switchStep(stepId) {
+function progressStatusText(section) {
+  if (!section.total || section.complete === 0) return "未着手";
+  if (section.complete >= section.total) return "完了";
+  return "入力中";
+}
+
+function progressStatusClass(section) {
+  if (!section.total || section.complete === 0) return "not-started";
+  if (section.complete >= section.total) return "done";
+  return "in-progress";
+}
+
+function currentFormProject() {
+  return currentProject() ? buildProjectData() : null;
+}
+
+function renderProgress() {
+  const progress = projectProgress(currentFormProject());
+  if ($("progressLabel")) $("progressLabel").textContent = `全体進捗 ${progress.percent}%`;
+  if ($("nextActionLabel")) $("nextActionLabel").textContent = progress.next;
+  if ($("progressBar")) $("progressBar").style.width = `${progress.percent}%`;
+  const track = document.querySelector(".progress-track");
+  if (track) track.setAttribute("aria-valuenow", String(progress.percent));
+  if ($("progressDetails")) {
+    $("progressDetails").innerHTML = progress.sections
+      .map((section) => `
+        <div class="progress-detail">
+          <span>${escapeHtml(section.label)}</span>
+          <strong>${section.complete} / ${section.total}項目</strong>
+        </div>
+      `)
+      .join("");
+  }
+  renderStepStates(progress.sections);
+}
+
+function sectionForStep(stepId, sections = projectProgress(currentFormProject()).sections) {
+  return sections.filter((section) => (section.stepId || section.id) === stepId);
+}
+
+function renderStepStates(sections = projectProgress(currentFormProject()).sections) {
+  document.querySelectorAll(".step").forEach((button) => {
+    const stepSections = sectionForStep(button.dataset.step, sections);
+    let status = "";
+    let statusClass = "not-started";
+    if (stepSections.length) {
+      const complete = stepSections.reduce((sum, section) => sum + section.complete, 0);
+      const total = stepSections.reduce((sum, section) => sum + section.total, 0);
+      const summary = { complete, total };
+      status = progressStatusText(summary);
+      statusClass = progressStatusClass(summary);
+    }
+    const baseLabel = button.dataset.label || button.textContent.trim();
+    button.dataset.label = baseLabel;
+    button.innerHTML = `<span>${escapeHtml(baseLabel)}</span>${status ? `<span class="step-state ${statusClass}">${status}</span>` : ""}`;
+  });
+}
+
+function requiredItemsForStep(stepId) {
+  return progressSections
+    .filter((section) => (section.stepId || section.id) === stepId)
+    .flatMap((section) => section.items.filter((item) => item.required).map((item) => ({ ...item, sectionLabel: section.label })));
+}
+
+function missingRequiredItemsForStep(stepId, project = currentFormProject()) {
+  return requiredItemsForStep(stepId).filter((item) => !isProgressItemComplete(project, item));
+}
+
+function fieldElementForProgressItem(item) {
+  return $(item.field || item.focus || item.id);
+}
+
+function focusProgressItem(item) {
+  const field = fieldElementForProgressItem(item);
+  if (!field) return;
+  field.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => field.focus({ preventScroll: true }), 250);
+}
+
+function showMissingRequiredDialog(count) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement("div");
+    backdrop.className = "confirm-backdrop";
+    backdrop.innerHTML = `
+      <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="missingRequiredTitle">
+        <h3 id="missingRequiredTitle">必須項目が${count}件未入力です。このまま次へ進みますか？</h3>
+        <div class="confirm-actions">
+          <button class="secondary" type="button" data-confirm-action="review">未入力項目を確認する</button>
+          <button type="button" data-confirm-action="proceed">このまま次へ進む</button>
+        </div>
+      </section>
+    `;
+    document.body.appendChild(backdrop);
+    const close = (result) => {
+      backdrop.remove();
+      resolve(result);
+    };
+    backdrop.addEventListener("click", (event) => {
+      const action = event.target.dataset.confirmAction;
+      if (action === "review") close(false);
+      if (action === "proceed") close(true);
+    });
+    backdrop.querySelector("[data-confirm-action='review']").focus();
+  });
+}
+
+async function confirmStepMove(stepId) {
+  const missing = missingRequiredItemsForStep(stepId);
+  if (!missing.length) return true;
+  const proceed = await showMissingRequiredDialog(missing.length);
+  if (proceed) return true;
+  focusProgressItem(missing[0]);
+  return false;
+}
+
+async function switchStep(stepId, options = {}) {
+  const activeStep = document.querySelector(".panel.is-visible")?.id;
+  if (options.confirmLeave && activeStep && activeStep !== stepId && !(await confirmStepMove(activeStep))) return;
   document.querySelectorAll(".panel").forEach((panel) => {
     panel.classList.toggle("is-visible", panel.id === stepId);
   });
@@ -327,6 +610,15 @@ function switchStep(stepId) {
   });
   $("sectionTitle").textContent = stepTitles[stepId] || "LP制作ウィザード";
   renderProgress();
+  renderSectionProgressSummaries();
+}
+
+async function moveStep(direction) {
+  const activeStep = document.querySelector(".panel.is-visible")?.id || "projects";
+  const currentIndex = workflowSteps.indexOf(activeStep);
+  const nextIndex = currentIndex + direction;
+  if (nextIndex < 0 || nextIndex >= workflowSteps.length) return;
+  await switchStep(workflowSteps[nextIndex], { confirmLeave: direction > 0 });
 }
 
 function renderReferences() {
@@ -574,6 +866,21 @@ LPの目的: ${getFieldValue("lpGoal") || "未入力"}
 行動ボタン（CTA）: ${getFieldValue("cta") || "未入力"}`;
 }
 
+function setProgressFlag(flag, value = true, statusText = "自動保存済み") {
+  saveCurrentProjectFromForm();
+  const project = currentProject();
+  if (!project) return;
+  project.progressFlags = {
+    ...(project.progressFlags || {}),
+    [flag]: value
+  };
+  localStorage.setItem("lpWizardData", JSON.stringify(buildAllData()));
+  renderProjects();
+  renderProgress();
+  renderSectionProgressSummaries();
+  setStatus(statusText);
+}
+
 function generateCopyPrompt() {
   const missing = missingFields(requiredForCopy);
   showValidation("copyValidation", missing, "主要項目は入力済みです。生成後も事実関係を確認してください。");
@@ -607,6 +914,7 @@ ${favoriteText()}
 6. CTA文言
 7. 不足情報・確認事項
 8. 改善提案`;
+  setProgressFlag("copyPromptGenerated", true, "構成・原稿プロンプト生成済み");
 }
 
 function generateDesignPrompt() {
@@ -646,6 +954,7 @@ ${referenceDesignText()}
 - ファーストビュー画像
 - 生成意図の短い説明
 - 次に進める場合の全セクション生成方針`;
+  setProgressFlag("designPromptGenerated", true, "画像生成プロンプト生成済み");
 }
 
 function generateGuidePrompt() {
@@ -676,6 +985,7 @@ ${referencesText()}
 9. NG例
 10. 他のAIに渡す再現用プロンプト
 11. 人間が一目で理解できる画像ガイドを作るための指示`;
+  setProgressFlag("guidePromptGenerated", true, "デザインガイドプロンプト生成済み");
 }
 
 function generateAiConsultPrompt() {
@@ -747,18 +1057,26 @@ function renderProjects() {
     return;
   }
   list.innerHTML = state.projects
-    .map((project) => `
-      <article class="project-card ${project.id === state.currentProjectId ? "selected-main" : ""}">
-        <div>
-          <div class="project-title">${escapeHtml(projectDisplayName(project))}</div>
-          <div class="project-meta">更新: ${escapeHtml((project.updatedAt || "").slice(0, 10) || "-")}</div>
-        </div>
-        <div class="project-meta project-progress">進捗 ${projectProgress(project).percent}%${project.id === state.currentProjectId ? "・開いています" : ""}</div>
-        <button type="button" data-open-project="${project.id}">開く</button>
-        <button class="secondary" type="button" data-duplicate-project="${project.id}">複製</button>
-        <button class="danger" type="button" data-delete-project="${project.id}">削除</button>
-      </article>
-    `)
+    .map((project) => {
+      const progress = projectProgress(project);
+      const updated = project.updatedAt ? new Date(project.updatedAt).toLocaleString("ja-JP", { dateStyle: "short", timeStyle: "short" }) : "-";
+      return `
+        <article class="project-card ${project.id === state.currentProjectId ? "selected-main" : ""}">
+          <div class="project-card-main">
+            <div class="project-title">${escapeHtml(projectDisplayName(project))}</div>
+            <div class="project-meta">最終更新日: ${escapeHtml(updated)}</div>
+            <div class="project-meta">現在取り組むべき工程: ${escapeHtml(progress.next.replace(/^次: /, ""))}</div>
+            <div class="project-card-progress" role="progressbar" aria-label="${escapeHtml(projectDisplayName(project))}の進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress.percent}">
+              <span style="width: ${progress.percent}%"></span>
+            </div>
+          </div>
+          <div class="project-meta project-progress">全体進捗 ${progress.percent}%${project.id === state.currentProjectId ? "・開いています" : ""}</div>
+          <button type="button" data-open-project="${project.id}">開く</button>
+          <button class="secondary" type="button" data-duplicate-project="${project.id}">複製</button>
+          <button class="danger" type="button" data-delete-project="${project.id}">削除</button>
+        </article>
+      `;
+    })
     .join("");
 }
 
@@ -773,7 +1091,8 @@ function createBlankProject(name = "新規LP案件") {
     references: [],
     checks: {},
     selections: {},
-    selectionNotes: {}
+    selectionNotes: {},
+    progressFlags: {}
   };
 }
 
@@ -836,7 +1155,10 @@ function deleteProject(projectId) {
 }
 
 function applyAllData(data) {
-  state.projects = data.projects || [];
+  state.projects = (data.projects || []).map((project) => ({
+    ...project,
+    progressFlags: project.progressFlags || {}
+  }));
   state.currentProjectId = data.currentProjectId || state.projects[0]?.id || null;
   state.favorites = data.favorites || [];
   if (!state.projects.length) {
@@ -859,7 +1181,8 @@ function applyProjectData(data) {
     id: data.id || createId(),
     name: data.name || data.serviceName || "読み込み案件",
     createdAt: data.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    progressFlags: data.progressFlags || {}
   };
   state.projects.push(project);
   state.currentProjectId = project.id;
@@ -1045,15 +1368,30 @@ function loadProject() {
 function resetProject() {
   if (!confirm("入力内容を初期化しますか？")) return;
   localStorage.removeItem("lpWizardProject");
+  localStorage.removeItem("lpWizardData");
   fields.forEach((id) => {
     if ($(id)) $(id).value = "";
   });
-  state = { mainReference: null, references: [], favorites: [], checks: {}, selections: {}, selectionNotes: {} };
+  const project = createBlankProject();
+  state = {
+    projects: [project],
+    currentProjectId: project.id,
+    mainReference: null,
+    references: [],
+    favorites: [],
+    checks: {},
+    selections: {},
+    selectionNotes: {}
+  };
   renderReferences();
   renderFavorites();
   renderReferencePicker();
   renderChecklist();
   renderOptionGroups();
+  renderProjects();
+  renderCurrentProjectLabel();
+  renderProgress();
+  renderSectionProgressSummaries();
   setStatus("初期化済み");
 }
 
@@ -1373,10 +1711,16 @@ document.querySelectorAll("[data-accordion]").forEach((button) => {
 
 document.addEventListener("input", (event) => {
   if (requiredFields[event.target.id]) updateRequiredFieldState(event.target);
-  if (fields.includes(event.target.id)) scheduleAutoSave();
+  if (fields.includes(event.target.id)) {
+    renderProgress();
+    renderSectionProgressSummaries();
+    scheduleAutoSave();
+  }
   const noteKey = event.target.dataset.optionNote;
   if (noteKey) {
     state.selectionNotes[noteKey] = event.target.value.trim();
+    renderProgress();
+    renderSectionProgressSummaries();
     scheduleAutoSave();
   }
 });
@@ -1396,6 +1740,8 @@ $("optionGroups").addEventListener("change", (event) => {
   if (!groupKey) return;
   const values = [...document.querySelectorAll(`[data-option-group="${groupKey}"]:checked`)].map((input) => input.value);
   state.selections[groupKey] = values;
+  renderProgress();
+  renderSectionProgressSummaries();
   scheduleAutoSave();
 });
 
@@ -1509,5 +1855,7 @@ renderReferencePicker();
 renderOptionGroups();
 renderConsultThemes();
 setupRequiredFields();
+setupSectionProgressSummaries();
+setupStepNavigation();
 enhanceEditButtons();
 renderProgress();
