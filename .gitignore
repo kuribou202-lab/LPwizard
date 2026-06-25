@@ -29,6 +29,7 @@ build/
 .cache/
 .parcel-cache/
 coverage/
+.wrangler/
 
 # Local editor and OS files
 .DS_Store
