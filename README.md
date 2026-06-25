@@ -50,6 +50,8 @@ Cloudflare Workersへの公開対象は `public/` フォルダのみです。
 
 公開前に、ルート直下の `index.html`、`styles.css`、`app.js` を `public/` に同期してからデプロイしてください。資料、Git管理ファイル、作業メモ、Wranglerキャッシュは公開対象外です。
 
+公開URLはWorker側のBasic認証で保護しています。パスワードはCloudflare Secret `LP_WIZARD_PASSWORD` に保存し、GitHubにはコミットしません。
+
 ## 今後追加しやすい機能
 
 - AI API連携
