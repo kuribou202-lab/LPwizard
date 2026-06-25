@@ -44,6 +44,12 @@ AIでLP制作する前工程を整理するための静的アプリです。
 http://localhost:8787/index.html
 ```
 
+## Cloudflare公開
+
+Cloudflare Workersへの公開対象は `public/` フォルダのみです。
+
+公開前に、ルート直下の `index.html`、`styles.css`、`app.js` を `public/` に同期してからデプロイしてください。資料、Git管理ファイル、作業メモ、Wranglerキャッシュは公開対象外です。
+
 ## 今後追加しやすい機能
 
 - AI API連携

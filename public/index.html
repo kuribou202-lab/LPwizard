@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LP制作ウィザード</title>
+    <link rel="stylesheet" href="styles.css?v=20260623-sections" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">LP Workflow</p>
+          <h1>LP制作ウィザード</h1>
+          <p class="lead">案件整理から原稿、デザイン生成準備までを第1回・第2回の流れで進めます。</p>
+        </div>
+        <nav class="steps" aria-label="制作ステップ">
+          <button class="step is-active" type="button" data-step="projects">0. 案件一覧</button>
+          <button class="step" type="button" data-step="brief">1. 案件</button>
+          <button class="step" type="button" data-step="library">2. お気に入りLP管理</button>
+          <button class="step" type="button" data-step="favorites">3. お気に入りLP一覧</button>
+          <button class="step" type="button" data-step="writing">4. ライティング設計</button>
+          <button class="step" type="button" data-step="references">5. 完成イメージ</button>
+          <button class="step" type="button" data-step="copy">6. 構成・原稿</button>
+          <button class="step" type="button" data-step="design">7. デザイン設計</button>
+          <button class="step" type="button" data-step="canva">8. Canva整理</button>
+          <button class="step" type="button" data-step="guide">9. ガイド</button>
+          <button class="step" type="button" data-step="settings">設定</button>
+        </nav>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Phase 1–2 Assistant</p>
+            <h2 id="sectionTitle">案件一覧</h2>
+            <p class="current-project" id="currentProjectLabel"></p>
+          </div>
+          <div class="progress-card" aria-live="polite">
+            <div class="progress-meta">
+              <strong id="progressLabel">進捗 0%</strong>
+              <span id="nextActionLabel">案件情報を入力してください</span>
+            </div>
+            <div class="progress-track" role="progressbar" aria-label="全体進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progressBar"></span></div>
+            <div class="progress-details" id="progressDetails"></div>
+          </div>
+        </header>
+
+        <section class="panel is-visible" id="projects">
+          <div class="section-head">
+            <h3>案件一覧</h3>
+            <p>複数のLP案件を切り替えて管理できます。お気に入りLPライブラリは全案件共通です。</p>
+          </div>
+          <div class="flow-cards overview-flow">
+            <div class="flow-card"><strong>1. 前提を整理</strong><span>案件、ターゲット、目的、導線を入力します。</span></div>
+            <div class="flow-card"><strong>2. 参考を選ぶ</strong><span>構成参考とデザイン参考を分けて決めます。</span></div>
+            <div class="flow-card"><strong>3. 原稿を作る</strong><span>不足情報を確認してからAI用プロンプトを生成します。</span></div>
+            <div class="flow-card"><strong>4. FVで方向確認</strong><span>最初から全画像を作らず、まずファーストビューを確認します。</span></div>
+            <div class="flow-card"><strong>5. Canvaで編集</strong><span>文字、CTA、事実関係、重複表現を人の目で直します。</span></div>
+            <div class="flow-card"><strong>6. ガイドを保存</strong><span>同じ世界観を再現できるデザインガイドを残します。</span></div>
+          </div>
+          <div class="actions-row">
+            <button id="createProject" type="button">新規案件作成</button>
+          </div>
+          <div class="project-list" id="projectList"></div>
+        </section>
+
+        <section class="panel" id="brief" aria-labelledby="sectionTitle">
+          <div class="section-head">
+            <div class="section-title-row"><h3>案件概要<span class="project-title-mark" data-project-title></span></h3><button class="secondary compact-consult" data-ai-consult-button type="button">AIに相談</button></div>
+            <p>LP制作前に必ず揃える前提情報です。赤い「必須」が付いた項目は、未確定でも仮説で入力しておきます。</p>
+          </div>
+          <div class="assist-box">
+            <div class="assist-head">
+              <div>
+                <h4>選択肢から方向性を作る</h4>
+                <p>当てはまるものを選ぶだけで自動保存され、AI用プロンプトに反映されます。</p>
+              </div>
+            </div>
+            <div class="option-groups" id="optionGroups"></div>
+          </div>
+          <div class="form-grid">
+            <label>サービス名<input id="serviceName" placeholder="例: Matcha Bloom" /></label>
+            <label>商材 / LP内容<textarea id="productDescription" placeholder="例: 季節限定の宇治抹茶と苺のご褒美パフェLP"></textarea></label>
+            <label>ターゲット<textarea id="targetAudience" placeholder="例: 20代から30代女性。カフェ巡り、Instagram投稿、限定スイーツに関心が高い"></textarea></label>
+            <label>提供価値<textarea id="valueProposition" placeholder="例: 本格抹茶のほろ苦さと苺の甘酸っぱさを楽しめる春限定スイーツ"></textarea></label>
+            <label>LPの目的<textarea id="lpGoal" placeholder="例: 来店予約、モバイルオーダー、Instagramキャンペーン応募を増やす"></textarea></label>
+            <label>成果の目安<input id="kpi" placeholder="例: 予約数、注文数、問い合わせ数、LINE登録数" /></label>
+            <label>流入経路<input id="trafficSource" placeholder="例: Instagram広告 / リール / 店舗QR" /></label>
+            <label>ゴール地点<input id="conversionPoint" placeholder="例: 予約ボタン、購入ボタン、問い合わせフォーム、LINE追加" /></label>
+            <label>補足事項<textarea id="notes" placeholder="素材の有無、店舗情報、NG表現、法務確認事項など"></textarea></label>
+          </div>
+        </section>
+
+        <section class="panel" id="writing">
+          <div class="section-subhead">
+            <div class="section-title-row"><h4>コピーライティング設計<span class="project-title-mark" data-project-title></span></h4><button class="secondary compact-consult" data-ai-consult-button type="button">AIに相談</button></div>
+            <p>LPの文章品質に大きく影響する項目です。赤い「必須」が付いた項目は、未確定でも仮説で入力してください。</p>
+          </div>
+          <div class="form-grid">
+            <label>ターゲットの悩み
+              <span class="field-help">例: 忙しくて比較する時間がない / 失敗したくない / 自分に合うか不安 / 何を選べばいいか分からない</span>
+              <textarea id="customerPain" placeholder="例: 限定スイーツに興味はあるが、混雑や予約方法が分からず来店を迷っている"></textarea>
+            </label>
+            <label>理想の未来
+              <span class="field-help">例: 迷わず選べる / 安心して申し込める / 特別な体験ができる / 周りに共有したくなる</span>
+              <textarea id="desiredFuture" placeholder="例: 春らしい特別なパフェをスムーズに予約し、友人と写真を撮って楽しめる"></textarea>
+            </label>
+            <label>悩みの原因
+              <span class="field-help">例: 情報が多すぎる / 違いが分かりにくい / 手順が複雑 / 専門知識がないと判断できない</span>
+              <textarea id="painCause" placeholder="例: 予約、販売期間、キャンペーン内容が分散していて、行動するきっかけが弱い"></textarea>
+            </label>
+            <label>解決策
+              <span class="field-help">例: 3ステップで完了 / 専門家が案内 / 限定セットで迷わない / 初心者向けに整理</span>
+              <textarea id="solution" placeholder="例: LP上で魅力、予約、モバイルオーダー、Instagram応募まで一気に分かるようにする"></textarea>
+            </label>
+            <label>ベネフィット
+              <span class="field-help">例: 時間を節約できる / 失敗を避けられる / 気分が上がる / 安心して始められる</span>
+              <textarea id="benefits" placeholder="例: 並ぶ不安を減らし、限定感のあるご褒美体験を楽しめる"></textarea>
+            </label>
+            <label>差別化ポイント
+              <span class="field-help">例: 限定性 / 実績 / 素材の品質 / 専門性 / 世界観 / サポート体制</span>
+              <textarea id="differentiators" placeholder="例: 宇治抹茶の本格感、苺の華やかさ、春限定の和風ビジュアル"></textarea>
+            </label>
+            <label>信頼材料
+              <span class="field-help">例: お客様の声 / 実績 / メディア掲載 / 監修者 / 数値データ / 保証</span>
+              <textarea id="trustProof" placeholder="例: 人気メニュー実績、来店者の投稿、店舗情報、販売期間、数量限定の根拠"></textarea>
+            </label>
+            <label>オファー
+              <span class="field-help">例: 初回限定 / 期間限定 / 数量限定 / 特典付き / 無料相談 / 先着キャンペーン</span>
+              <textarea id="offer" placeholder="例: 春限定、数量限定、Instagram投稿キャンペーン参加で特典"></textarea>
+            </label>
+            <label>不安・反論
+              <span class="field-help">例: 高そう / 面倒そう / 本当に効果があるか不安 / キャンセルできるか不安</span>
+              <textarea id="objections" placeholder="例: 混雑が心配、予約が面倒、写真と実物が違わないか不安"></textarea>
+            </label>
+            <label>行動ボタン（CTA）
+              <span class="field-help">例: 今すぐ予約する / 無料で相談する / LINEで受け取る / 限定セットを見る</span>
+              <textarea id="cta" placeholder="例: 来店予約する / モバイルオーダーする / キャンペーンに応募する"></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel" id="library">
+          <div class="section-head">
+            <h3>お気に入りLP管理</h3>
+            <p>ステップ2: 参考サイトからお気に入りLPを探して登録します。ここに保存したLPは、次の「完成イメージ」画面で今回の案件に反映できます。</p>
+          </div>
+          <div class="accordion">
+            <button class="accordion-trigger is-open" type="button" data-accordion="librarySearchSitesAccordion" aria-expanded="true">
+              <span>参考LPを探せるサイト</span>
+              <span class="accordion-icon">＋</span>
+            </button>
+            <div class="accordion-content is-open" id="librarySearchSitesAccordion">
+              <div class="link-grid">
+                <a href="https://sankoudesign.com/" target="_blank" rel="noreferrer"><strong>SANKOU!</strong><span>国内サイトが多く、業種・雰囲気から探しやすい</span></a>
+                <a href="https://rdlp.jp/lp-archive/" target="_blank" rel="noreferrer"><strong>LP ARCHIVE</strong><span>LP特化。構成、訴求順、縦長ページの参考に向く</span></a>
+                <a href="https://webdesignclip.com/" target="_blank" rel="noreferrer"><strong>Web Design Clip</strong><span>洗練された国内Webデザインを探しやすい</span></a>
+                <a href="https://muuuuu.org/" target="_blank" rel="noreferrer"><strong>MUUUUU.ORG</strong><span>余白、写真、タイポグラフィの質が高い事例が多い</span></a>
+                <a href="https://io3000.com/" target="_blank" rel="noreferrer"><strong>I/O 3000</strong><span>表現力のあるサイトが多く、世界観作りの参考に向く</span></a>
+                <a href="https://81-web.com/" target="_blank" rel="noreferrer"><strong>81-web.com</strong><span>日本らしいデザインや企業サイトの参考を探しやすい</span></a>
+                <a href="https://bookma.org/" target="_blank" rel="noreferrer"><strong>bookma!</strong><span>シンプルで見やすいUI、余白、情報整理の参考に向く</span></a>
+                <a href="https://www.pinterest.jp/" target="_blank" rel="noreferrer"><strong>Pinterest</strong><span>色味、写真、装飾、ムードボード作りに便利</span></a>
+                <a href="https://www.canva.com/templates/" target="_blank" rel="noreferrer"><strong>Canvaテンプレート</strong><span>初心者でも再現しやすいレイアウトやバナー参考が多い</span></a>
+                <a href="https://dribbble.com/" target="_blank" rel="noreferrer"><strong>Dribbble</strong><span>海外風のビジュアル、配色、パーツ表現の参考に向く</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="accordion">
+            <button class="accordion-trigger is-open" type="button" data-accordion="favoriteAccordion" aria-expanded="true">
+              <span>新しく参考LPを登録</span>
+              <span class="accordion-icon">＋</span>
+            </button>
+            <div class="accordion-content is-open" id="favoriteAccordion">
+              <div class="assist-box">
+                <div class="assist-head">
+                  <div>
+                    <h4>参考LP登録</h4>
+                    <p>上の参考サイトで見つけたLPのURLを入れて登録します。必要なら「URL情報を取得」でサイト名とタグ候補を補完します。</p>
+                  </div>
+                </div>
+                <div class="favorite-inputs">
+                  <input id="favoriteTitle" placeholder="サイト名" />
+                  <div class="url-field">
+                    <input id="favoriteUrl" placeholder="お気に入り登録したいLPのURL" />
+                    <button class="secondary" id="fetchFavoriteMeta" type="button">URL情報を取得</button>
+                  </div>
+                  <select id="favoriteCategory">
+                    <option value="">カテゴリー</option>
+                    <option value="飲食">飲食</option>
+                    <option value="美容">美容</option>
+                    <option value="医療">医療</option>
+                    <option value="教育">教育</option>
+                    <option value="EC">EC</option>
+                    <option value="BtoB">BtoB</option>
+                    <option value="採用">採用</option>
+                    <option value="イベント">イベント</option>
+                    <option value="店舗集客">店舗集客</option>
+                    <option value="その他">その他</option>
+                  </select>
+                  <input id="favoriteProduct" placeholder="商材: スイーツ, SaaS, サロン" />
+                  <select id="favoriteUse">
+                    <option value="構成参考">構成参考</option>
+                    <option value="デザイン参考">デザイン参考</option>
+                    <option value="色味参考">色味参考</option>
+                    <option value="FV参考">FV参考</option>
+                    <option value="導線参考">導線参考</option>
+                    <option value="装飾参考">装飾参考</option>
+                    <option value="モバイルファースト">モバイルファースト</option>
+                    <option value="商材参考">商材参考</option>
+                    <option value="カテゴリー参考">カテゴリー参考</option>
+                  </select>
+                  <button id="addFavorite" type="button">登録</button>
+                </div>
+                <input id="favoriteTags" placeholder="タグ: カフェ, かわいい, 季節感" />
+                <div class="actions-row compact-actions">
+                  <span class="inline-status" id="favoriteMetaStatus">URLを入力すると、取得できる範囲でサイト名とタグ候補を補完します。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="favorites">
+          <div class="section-head">
+            <h3>お気に入りLP一覧</h3>
+            <p>登録済みのお気に入りLPを一覧で確認・検索・絞り込み・削除できます。</p>
+          </div>
+          <div class="library-filters">
+            <input id="favoriteSearch" placeholder="キーワード検索" />
+            <select id="favoriteCategoryFilter">
+              <option value="">すべてのカテゴリー</option>
+              <option value="飲食">飲食</option>
+              <option value="美容">美容</option>
+              <option value="医療">医療</option>
+              <option value="教育">教育</option>
+              <option value="EC">EC</option>
+              <option value="BtoB">BtoB</option>
+              <option value="採用">採用</option>
+              <option value="イベント">イベント</option>
+              <option value="店舗集客">店舗集客</option>
+              <option value="その他">その他</option>
+            </select>
+            <select id="favoriteUseFilter">
+              <option value="">すべての用途</option>
+              <option value="構成参考">構成参考</option>
+              <option value="デザイン参考">デザイン参考</option>
+              <option value="色味参考">色味参考</option>
+              <option value="FV参考">FV参考</option>
+              <option value="導線参考">導線参考</option>
+              <option value="装飾参考">装飾参考</option>
+              <option value="モバイルファースト">モバイルファースト</option>
+              <option value="商材参考">商材参考</option>
+              <option value="カテゴリー参考">カテゴリー参考</option>
+            </select>
+          </div>
+          <div class="favorite-list" id="favoriteList"></div>
+        </section>
+
+        <section class="panel" id="references">
+          <div class="section-head">
+            <h3>完成イメージに近い参考LP<span class="project-title-mark" data-project-title></span></h3>
+            <p>お気に入りLP管理で登録したLPから、今回のデザイン生成に使うメイン参考LPと補助参考LPを選びます。</p>
+          </div>
+          <div class="accordion">
+            <button class="accordion-trigger is-open" type="button" data-accordion="chooseReferenceAccordion" aria-expanded="true">
+              <span>登録済みお気に入りLPから生成プロンプトに反映するLPを決定する</span>
+              <span class="accordion-icon">＋</span>
+            </button>
+            <div class="accordion-content is-open" id="chooseReferenceAccordion">
+              <div class="library-filters">
+                <input id="referenceSearch" placeholder="キーワード検索" />
+                <select id="referenceCategoryFilter">
+                  <option value="">すべてのカテゴリー</option>
+                  <option value="飲食">飲食</option>
+                  <option value="美容">美容</option>
+                  <option value="医療">医療</option>
+                  <option value="教育">教育</option>
+                  <option value="EC">EC</option>
+                  <option value="BtoB">BtoB</option>
+                  <option value="採用">採用</option>
+                  <option value="イベント">イベント</option>
+                  <option value="店舗集客">店舗集客</option>
+                  <option value="その他">その他</option>
+                </select>
+                <select id="referenceUseFilter">
+                  <option value="">すべての用途</option>
+                  <option value="デザイン参考">デザイン参考</option>
+                  <option value="FV参考">FV参考</option>
+                  <option value="色味参考">色味参考</option>
+                  <option value="モバイルファースト">モバイルファースト</option>
+                  <option value="商材参考">商材参考</option>
+                  <option value="カテゴリー参考">カテゴリー参考</option>
+                </select>
+                <button class="secondary" id="suggestFavorites" type="button">この案件に合う候補</button>
+              </div>
+              <div class="favorite-list" id="referencePickerList"></div>
+              <div class="section-subhead">
+                <h4>選択済み</h4>
+                <p>メイン参考LPは1つだけ、補助参考LPは複数追加できます。</p>
+              </div>
+              <div class="reference-list" id="selectedReferenceList"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="copy">
+          <div class="section-head">
+            <div class="section-title-row"><h3>構成・原稿生成<span class="project-title-mark" data-project-title></span></h3><button class="secondary compact-consult" data-ai-consult-button type="button">AIに相談</button></div>
+            <p>AIに貼り付けるためのプロンプトを生成します。出力結果は下の欄に保存できます。</p>
+          </div>
+          <div class="validation-box" id="copyValidation" hidden></div>
+          <div class="actions-row">
+            <button id="generateCopyPrompt" type="button">構成・原稿プロンプト作成</button>
+            <button class="secondary" data-copy-target="copyPrompt" type="button">コピー</button>
+            <button class="secondary" id="exportCopyMarkdown" type="button">原稿をMarkdown保存</button>
+          </div>
+          <textarea class="output" id="copyPrompt" readonly></textarea>
+          <label>AI生成後のLP構成・原稿<textarea id="generatedCopy" placeholder="AIから返ってきた構成案・原稿を貼り付けて保存"></textarea></label>
+        </section>
+
+        <section class="panel" id="design">
+          <div class="section-head">
+            <div class="section-title-row"><h3>デザイン設計・生成準備<span class="project-title-mark" data-project-title></span></h3><button class="secondary compact-consult" data-ai-consult-button type="button">AIに相談</button></div>
+            <p>ターゲットに合わせた見た目の方向性を整理し、FVと全セクション画像生成に進みます。</p>
+          </div>
+          <div class="form-grid">
+            <label>デザイン方針<textarea id="designDirection" placeholder="例: モバイルファースト。春らしさ、和風、水彩、手書き装飾"></textarea></label>
+            <label>世界観<textarea id="visualWorld" placeholder="例: 春限定の特別感、上品な和モダン、SNSで共有したくなる華やかさ"></textarea></label>
+            <label>色・雰囲気<textarea id="colorMood" placeholder="例: 抹茶グリーン、苺ピンク、白背景、淡い水彩、やわらかい印象"></textarea></label>
+            <label>写真・画像の見せ方<textarea id="photoStyle" placeholder="例: 商品を大きく見せる、手元カット、スプーンですくう構図、自然光"></textarea></label>
+            <label>ファーストビュー方針<textarea id="fvDirection" placeholder="例: 商品写真を主役にし、限定感と予約導線を一目で伝える"></textarea></label>
+            <label>レイアウト・余白<textarea id="layoutNotes" placeholder="例: スマホで縦に読みやすく、CTAは各区切りに配置。文字は小さくしすぎない"></textarea></label>
+          </div>
+          <div class="section-subhead">
+            <h4>画像生成プロンプト</h4>
+            <p>上のデザイン設計と完成イメージで選んだ参考LPをもとに作成します。</p>
+          </div>
+          <div class="validation-box" id="designValidation" hidden></div>
+          <div class="actions-row">
+            <button id="generateDesignPrompt" type="button">画像生成プロンプト作成</button>
+            <button class="secondary" data-copy-target="designPrompt" type="button">コピー</button>
+          </div>
+          <textarea class="output" id="designPrompt" readonly></textarea>
+          <label>生成画像の保存場所・メモ<textarea id="designAssets" placeholder="例: assets/matcha-bloom/section-01.png など"></textarea></label>
+        </section>
+
+        <section class="panel" id="canva">
+          <div class="section-head">
+            <h3>Canva編集チェック<span class="project-title-mark" data-project-title></span></h3>
+            <p>第2回で扱っていた、画像LPを編集可能にするための確認項目です。</p>
+          </div>
+          <div class="checklist" id="canvaChecklist"></div>
+        </section>
+
+        <section class="panel" id="guide">
+          <div class="section-head">
+            <h3>デザインガイド<span class="project-title-mark" data-project-title></span></h3>
+            <p>同じテイストでバナー、広告、別LPに展開するための再利用情報です。</p>
+          </div>
+          <div class="actions-row">
+            <button id="generateGuidePrompt" type="button">デザインガイドプロンプト作成</button>
+            <button class="secondary" data-copy-target="guidePrompt" type="button">コピー</button>
+          </div>
+          <textarea class="output" id="guidePrompt" readonly></textarea>
+          <label>デザインガイド本文<textarea id="designGuide" placeholder="AIが生成したデザインガイドを貼り付けて保存"></textarea></label>
+        </section>
+
+        <section class="panel" id="settings">
+          <div class="section-head">
+            <h3>設定</h3>
+            <p>現在の案件、またはアプリ全体のデータをバックアップ・復元します。</p>
+          </div>
+          <div class="assist-box backup-note">
+            <strong>大切な案件は定期的に書き出してください</strong>
+            <p>ブラウザ保存だけでは、履歴削除や別端末への移動でデータを失う場合があります。</p>
+          </div>
+          <div class="settings-actions">
+            <button class="secondary" id="exportCurrentProject" type="button">現在の案件をJSON保存</button>
+            <button class="secondary" id="exportProjectMarkdown" type="button">現在の案件をMarkdown保存</button>
+            <button class="secondary" id="exportProject" type="button">全データをJSON保存</button>
+            <label class="import-button settings-import">
+              全データを読み込み
+              <input id="importProject" type="file" accept="application/json,.json" />
+            </label>
+          </div>
+        </section>
+        <div class="floating-status" id="saveStatus">未保存</div>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="aiModal" aria-hidden="true">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Manual AI Assist</p>
+            <h3 id="aiModalTitle">AIに相談</h3>
+          </div>
+          <button class="icon-button" id="closeAiConsult" type="button" aria-label="閉じる">×</button>
+        </div>
+
+        <div class="modal-grid">
+          <label>相談テーマ
+            <select id="aiConsultTheme"></select>
+          </label>
+          <label>回答の反映先
+            <select id="aiApplyTarget">
+              <option value="targetAudience">ターゲット</option>
+              <option value="valueProposition">提供価値</option>
+              <option value="lpGoal">LPの目的</option>
+              <option value="kpi">成果の目安</option>
+              <option value="trafficSource">流入経路</option>
+              <option value="conversionPoint">ゴール地点</option>
+              <option value="designDirection">デザイン方針</option>
+              <option value="notes">補足事項</option>
+              <option value="generatedCopy">AI生成後のLP構成・原稿</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions-row">
+          <button id="generateAiConsultPrompt" type="button">相談プロンプト作成</button>
+          <button class="secondary" data-copy-target="aiConsultPrompt" type="button">コピー</button>
+        </div>
+
+        <label>AIに貼り付ける相談プロンプト
+          <textarea class="output modal-output" id="aiConsultPrompt" readonly></textarea>
+        </label>
+
+        <label>AIの回答貼り付け欄
+          <textarea id="aiConsultAnswer" placeholder="ChatGPT / Codex などの回答をここに貼り付け"></textarea>
+        </label>
+
+        <div class="actions-row modal-actions">
+          <button id="applyAiAnswer" type="button">回答を反映先へ追記</button>
+          <button class="secondary" id="clearAiAnswer" type="button">回答欄をクリア</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
