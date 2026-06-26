@@ -452,7 +452,7 @@ function setupStepNavigation() {
 
 function isProgressItemComplete(project, item) {
   if (!project) return false;
-  if (item.field) return Boolean(String(project[item.field] || "").trim());
+  if (item.field) return Boolean(projectFieldTextWithAssist(project, item.field).trim());
   if (item.flag) return Boolean(project.progressFlags?.[item.flag]);
   if (item.test) return Boolean(item.test(project));
   return false;
@@ -744,22 +744,28 @@ function renderChecklist() {
 }
 
 function renderOptionGroups() {
-  $("optionGroups").innerHTML = optionGroups
-    .map((group) => `
-      <div class="option-group">
-        <div class="option-group-title">${group.title}</div>
-        <div class="option-grid">
-          ${group.options.map((option) => `
-            <label class="option-chip">
-              <input type="checkbox" data-option-group="${group.key}" value="${option}" ${isSelected(group.key, option) ? "checked" : ""} />
-              <span>${option}</span>
-            </label>
-          `).join("")}
-        </div>
-        <textarea class="option-note" data-option-note="${group.key}" placeholder="自由追記: 選択肢にない条件や具体情報があれば入力">${escapeHtml(state.selectionNotes[group.key] || "")}</textarea>
+  document.querySelectorAll(".field-option-assist").forEach((element) => element.remove());
+  optionGroups.forEach((group) => {
+    const field = $(group.target);
+    const label = field?.closest("label");
+    if (!field || !label) return;
+
+    const assist = document.createElement("div");
+    assist.className = "field-option-assist";
+    assist.innerHTML = `
+      <div class="option-group-title">${escapeHtml(group.title)}の入力補助</div>
+      <div class="option-grid">
+        ${group.options.map((option) => `
+          <span class="option-chip">
+            <input type="checkbox" data-option-group="${group.key}" value="${escapeHtml(option)}" aria-label="${escapeHtml(option)}" ${isSelected(group.key, option) ? "checked" : ""} />
+            <span>${escapeHtml(option)}</span>
+          </span>
+        `).join("")}
       </div>
-    `)
-    .join("");
+      <textarea class="option-note" data-option-note="${group.key}" placeholder="自由追記: 選択肢にない条件や具体情報があれば入力">${escapeHtml(state.selectionNotes[group.key] || "")}</textarea>
+    `;
+    field.insertAdjacentElement("afterend", assist);
+  });
 }
 
 function renderConsultThemes() {
@@ -822,6 +828,32 @@ function selectionsText() {
     .join("\n");
 }
 
+function optionGroupText(group, source = state) {
+  const selected = source.selections?.[group.key] || [];
+  const note = source.selectionNotes?.[group.key] || "";
+  return [selected.join("、"), note].filter(Boolean).join(" / ");
+}
+
+function projectFieldTextWithAssist(project, fieldId) {
+  const base = String(project?.[fieldId] || "").trim();
+  const additions = optionGroups
+    .filter((group) => group.target === fieldId)
+    .map((group) => optionGroupText(group, project))
+    .filter(Boolean)
+    .filter((text) => !base.includes(text));
+  return mergeText(base, additions);
+}
+
+function fieldTextWithAssist(fieldId) {
+  const base = getFieldValue(fieldId);
+  const additions = optionGroups
+    .filter((group) => group.target === fieldId)
+    .map((group) => optionGroupText(group))
+    .filter(Boolean)
+    .filter((text) => !base.includes(text));
+  return mergeText(base, additions) || "未入力";
+}
+
 function currentConsultTheme() {
   return consultThemes.find((theme) => theme.key === $("aiConsultTheme").value) || consultThemes[0];
 }
@@ -833,17 +865,14 @@ function syncConsultTarget() {
 
 function briefText() {
   return `サービス名: ${getFieldValue("serviceName") || "未入力"}
-選択式の整理:
-${selectionsText()}
-
-商材 / LP内容: ${getFieldValue("productDescription") || "未入力"}
-ターゲット: ${getFieldValue("targetAudience") || "未入力"}
-提供価値: ${getFieldValue("valueProposition") || "未入力"}
-LPの目的: ${getFieldValue("lpGoal") || "未入力"}
+商材 / LP内容: ${fieldTextWithAssist("productDescription")}
+ターゲット: ${fieldTextWithAssist("targetAudience")}
+提供価値: ${fieldTextWithAssist("valueProposition")}
+LPの目的: ${fieldTextWithAssist("lpGoal")}
 成果の目安: ${getFieldValue("kpi") || "未入力"}
-流入経路: ${getFieldValue("trafficSource") || "未入力"}
-ゴール地点: ${getFieldValue("conversionPoint") || "未入力"}
-デザイン方針: ${getFieldValue("designDirection") || "未入力"}
+流入経路: ${fieldTextWithAssist("trafficSource")}
+ゴール地点: ${fieldTextWithAssist("conversionPoint")}
+デザイン方針: ${fieldTextWithAssist("designDirection")}
 補足事項: ${getFieldValue("notes") || "未入力"}
 
 デザイン設計:
@@ -1735,7 +1764,7 @@ $("projectList").addEventListener("click", (event) => {
   if (deleteId) deleteProject(deleteId);
 });
 
-$("optionGroups").addEventListener("change", (event) => {
+document.addEventListener("change", (event) => {
   const groupKey = event.target.dataset.optionGroup;
   if (!groupKey) return;
   const values = [...document.querySelectorAll(`[data-option-group="${groupKey}"]:checked`)].map((input) => input.value);
